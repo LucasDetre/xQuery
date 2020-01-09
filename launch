@@ -1,0 +1,119 @@
+#!/bin/bash
+SORTIE=0
+until [[ ${SORTIE} -eq 1 ]]; do
+    CHOIX=0
+    echo -e "\t ______________________________________________________ "
+    echo -e "\t|                                                      |"
+    echo -e "\t|              Modification de document XML            |"
+    echo -e "\t|______________________________________________________|"
+    echo -e "\t|                                                      |"
+    echo -e "\t|     Sélectionnez une option :                        |"
+    echo -e "\t|                                                      |"
+    echo -e "\t|  1. xQuery                                           |"
+    echo -e "\t|  2. XSLT                                             |"
+    echo -e "\t|  3. DOM (sans xpath)                                 |"
+    echo -e "\t|  4. DOM (avec xpath)                                 |"
+    echo -e "\t|  5. Sax.                                             |"
+    echo -e "\t|  6. Lancer un reporting global                       |"
+    echo -e "\t|  7. Quitter.                                         |"
+    echo -e "\t|______________________________________________________|"
+    until [[ ${CHOIX} -le 7 && ${CHOIX} -gt 0 ]]; do
+        echo -en "\n\tChoix :\t"
+        read CHOIX
+        if [[ ${CHOIX} -gt 7 ]] || [[ ${CHOIX} -lt 0 ]] || [ ! "$(echo ${CHOIX} | grep "^[ [:digit:] ]*$")" ] 
+        then
+            echo -e "\n\tChoix invalide, rééssayez."
+        fi
+    done
+
+    if [[ ${CHOIX} -eq 1 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Utilisation de xQuery en cours...                  |"
+        echo -e "\t|______________________________________________________|"
+        echo -e "\nTemps d'execution :\n" 
+        cd programmes 
+        time java -cp saxon9he.jar net.sf.saxon.Query -q:xquery.xq -s:../entree/assemblee1920.xml -o:../sortie/sortie.xml
+        wait $!
+        cd ..
+        echo -e "\t Visualisez le résultat dans le fichier \"sortie/sortie.xml\""
+
+    fi
+    if [[ ${CHOIX} -eq 2 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Utilisation de XSLT en cours...                  |"
+        echo -e "\t|______________________________________________________|"
+        echo -e "\nTemps d'execution :\n" 
+        cd programmes 
+        time java -jar saxon9he.jar -xsl:XSLT.xsl -s:../entree/assemblee1920.xml -o:../sortie/sortie.xml
+        wait $!
+        cd ..
+        echo -e "\t Visualisez le résultat dans le fichier \"sortie/sortie.xml\""
+
+    fi
+    if [[ ${CHOIX} -eq 3 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Utilisation de DOM (sans xpath) en cours...      |"
+        echo -e "\t|______________________________________________________|"
+        echo -e "\nTemps d'execution :\n" 
+        cd programmes
+        time php dom_sans_xpath.php > ../sortie/sortie.xml
+        wait $!
+        cd ..
+        echo -e "\n\n\n\t Visualisez le résultat dans le fichier \"sortie/sortie.xml\""
+
+    fi
+    if [[ ${CHOIX} -eq 4 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Utilisation de DOM (avec xpath) en cours...      |"
+        echo -e "\t|______________________________________________________|"
+        echo -e "\nTemps d'execution :\n" 
+        cd programmes 
+        time php dom_avec_xpath.php > ../sortie/sortie.xml
+        wait $!
+        cd ..
+        echo -e "\t Visualisez le résultat dans le fichier \"sortie/sortie.xml\""
+
+    fi
+    if [[ ${CHOIX} -eq 5 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Utilisation de Sax4PHP en cours...               |"
+        echo -e "\t|______________________________________________________|"
+        echo -e "\nTemps d'execution :\n" 
+        cd programmes 
+        time php sax.php > ../sortie/sortie.xml
+        wait $!
+        cd ..
+        echo -e "\t Visualisez le résultat dans le fichier \"sortie/sortie.xml\""
+
+    fi
+    if [[ ${CHOIX} -eq 6 ]]
+    then
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|     Reporting/benchmark hyperfile en cours...        |"
+        echo -e "\t|______________________________________________________|"
+        cd programmes
+        hyperfine 'java -cp saxon9he.jar net.sf.saxon.Query -q:xquery.xq -s:../entree/assemblee1920.xml -o:../sortie/sortie.xml' 'php dom_avec_xpath.php > ../sortie/sortie.xml' 'php dom_sans_xpath.php > ../sortie/sortie.xml' 'php sax.php > ../sortie/sortie.xml' 'java -jar saxon9he.jar -xsl:XSLT.xsl -s:../entree/assemblee1920.xml -o:../sortie/sortie.xml' --export-markdown ../reporting/REPORTING.md --export-json ../reporting/REPORTING.json --export-csv ../reporting/REPORTING.csv
+        wait $!
+        cd ..
+        echo -e "\t Visualisez d'autres formats de résultat dans le dossier \"reporting/\""
+    fi
+    if [[ ${CHOIX} -eq 7 ]]
+    then
+        SORTIE=1
+        echo -e "\t ______________________________________________________ "
+        echo -e "\t|                                                      |"
+        echo -e "\t|                     A bientôt                        |"
+        echo -e "\t|______________________________________________________|\n"
+    fi
+done
