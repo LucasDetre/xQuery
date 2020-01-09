@@ -7,24 +7,27 @@ declare option output:omit-xml-declaration "no";
 declare option output:indent "yes";
 declare option output:doctype-system "info.dtd";
 
-<information> {
+<information> 
+{
+    (: Pour chaque acteur :)
     for $acteur in /assemblée/liste-acteurs/ns:acteur
-    let $prenomnom := (concat($acteur/ns:etatCivil/ns:ident/ns:prenom, ' ', $acteur/ns:etatCivil/ns:ident/ns:nom))
-    let $nomprenom := (concat(lower-case($acteur/ns:etatCivil/ns:ident/ns:nom), ';', $acteur/ns:etatCivil/ns:ident/ns:prenom))
-    let $idActeur := $acteur/ns:uid
-    order by $nomprenom
+    (: Trié alphabétiquement sur son nom de famille et son prénom:)
+    order by (concat(lower-case($acteur/ns:etatCivil/ns:ident/ns:nom), ';', $acteur/ns:etatCivil/ns:ident/ns:prenom))
     return
-        if (count(/assemblée/liste-scrutins/ns:scrutin[contains(ns:titre, "l&apos;information") and ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant/ns:acteurRef = $idActeur]) > 0) then 
-            <ac nom="{ $prenomnom }">
+        (: Si cet acteur a voté "pour" à un scrutin dont le titre contient "l'information" :)
+        if (count(/assemblée/liste-scrutins/ns:scrutin[contains(ns:titre, "l&apos;information") and ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant/ns:acteurRef = $acteur/ns:uid]) > 0) then 
+            (: On affiche son Prénom et Nom :)
+            <ac nom="{(concat($acteur/ns:etatCivil/ns:ident/ns:prenom, ' ', $acteur/ns:etatCivil/ns:ident/ns:nom))}">
             {
-                for $scrutin in /assemblée/liste-scrutins/ns:scrutin[contains(ns:titre, "l&apos;information") and ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant/ns:acteurRef = $idActeur]
-                let $titre := $scrutin/ns:titre
-                let $votantActeurScrutin := $scrutin/ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant[ns:acteurRef = $idActeur]
+                (: Pour chaque scrutin concerné (pour lequel l'acteur a voté "pour" contenant "l'information" dans son titre) :)
+                for $scrutin in /assemblée/liste-scrutins/ns:scrutin[contains(ns:titre, "l&apos;information") and ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant/ns:acteurRef = $acteur/ns:uid]
+                (: On récupère le votant associé à ce scrutin :)
+                let $votantActeurScrutin := $scrutin/ns:ventilationVotes/ns:organe/ns:groupes/ns:groupe/ns:vote/ns:decompteNominatif/ns:pours/ns:votant[ns:acteurRef = $acteur/ns:uid]
+                (: On récupère le mandat associé à ce votant :)
                 let $mandatActeur := /assemblée/liste-acteurs/ns:acteur/ns:mandats/ns:mandat[ns:uid eq $votantActeurScrutin/ns:mandatRef]
-
-                order by $titre
+                (: On affiche les informations voulues :)
                 return
-                    <sc nom="{$titre}"
+                    <sc nom="{$scrutin/ns:titre}"
                         sort="{$scrutin/ns:sort/ns:code}"
                         date="{$scrutin/ns:dateScrutin}"
                         mandat="{$mandatActeur/ns:infosQualite/ns:libQualite} Assemblée nationale de la {$mandatActeur/ns:legislature} ème législature"
@@ -33,4 +36,5 @@ declare option output:doctype-system "info.dtd";
             }
             </ac>
         else ()
-} </information>
+} 
+</information>
